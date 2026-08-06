@@ -1,0 +1,19 @@
+国コード早見帳
+
+【Google Admob】
+アプリid
+ca-app-pub-8174756915786797~9482173697
+
+■countrycode_android_home_banner
+AdMob 広告ユニット ID
+ca-app-pub-8174756915786797/4075989687
+
+『iOS』
+アプリid
+ca-app-pub-8174756915786797~9173951855
+
+■countrycode_ios_home_banner
+AdMob 広告ユニット ID
+ca-app-pub-8174756915786797/8982380160
+
+

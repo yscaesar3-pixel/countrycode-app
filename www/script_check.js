@@ -1,0 +1,800 @@
+
+// ------------------------------------------------------------------
+// 多言語対応(UI文言): 日本語 / 英語
+// ------------------------------------------------------------------
+const I18N = {
+  ja: {
+    eyebrow: "COUNTRY CODE LOOKUP",
+    title: "国コード早見帳",
+    subtitle: "国のアルファベット3文字コード、または国名で調べられます",
+    tabCode: "コードで調べる",
+    tabName: "名前で調べる",
+    quickLabel: "よく調べられる国",
+    nameInputPlaceholder: "例: 中国 / china / チャイナ",
+    resultPlaceholder: "コードまたは国名を入力すると<br>ここに国名と「ありがとう」が表示されます",
+    footer: "世界の国コード & あいさつ辞典",
+    helpLink: "使い方を見る",
+    thanksLabel: "「ありがとう」",
+    playPronunciation: "発音を再生",
+    notFoundMsg: "該当する国コードが見つかりませんでした。<br>入力ミスがないか確認してください。",
+    noNameResults: "該当する国が見つかりませんでした",
+    obTitle: "国コード早見帳へようこそ",
+    obStep1: "パスポートなどで見かける3文字の国コード(例: CHN)を入力すると、国名が分かります",
+    obStep2: "国コードが分からなくても、「名前で調べる」タブから日本語・英語どちらでも検索できます",
+    obStep3: "見つかった国の「ありがとう」は、スピーカーのボタンで発音を聴くこともできます",
+    obStart: "はじめる",
+    settingsTitle: "データを編集",
+    settingsDesc: "国名・言語・「ありがとう」の表記やカタカナ読みを編集できます。変更はこの端末に保存され、次回起動時も反映されます。",
+    settingsSearchPlaceholder: "国コードまたは国名で検索(例: THA / タイ)",
+    resetAllBtn: "すべての編集内容を初期値に戻す",
+    saveBtn: "保存",
+    rowResetBtn: "初期値に戻す",
+    savedFlash: "保存しました",
+    resetFlash: "初期値に戻しました",
+    resetAllConfirm: "すべての編集内容を初期値に戻します。よろしいですか?",
+    fieldJa: "国名(日本語)",
+    fieldLang: "言語",
+    fieldNative: "現地語の「ありがとう」",
+    fieldKana: "カタカナ読み",
+    fieldRomaji: "ローマ字読み",
+    settingsMoreHint: "他 {n}か国は検索して表示してください",
+  },
+  en: {
+    eyebrow: "COUNTRY CODE LOOKUP",
+    title: "Country Code Lookup",
+    subtitle: "Look up a country by its 3-letter code or by name",
+    tabCode: "By Code",
+    tabName: "By Name",
+    quickLabel: "Frequently Looked Up",
+    nameInputPlaceholder: "e.g. China / 中国 / チャイナ",
+    resultPlaceholder: "Enter a country code or name,<br>and the result will appear here",
+    footer: "A little dictionary of country codes & greetings",
+    helpLink: "How to use",
+    thanksLabel: '"Thank you"',
+    playPronunciation: "Play pronunciation",
+    notFoundMsg: "No matching country code found.<br>Please check your spelling.",
+    noNameResults: "No matching country found",
+    obTitle: "Welcome to Country Code Lookup",
+    obStep1: "Enter the 3-letter country code you see on a passport (e.g. CHN) to find out the country.",
+    obStep2: "Not sure of the code? Use the \"By Name\" tab to search in Japanese or English.",
+    obStep3: "Tap the speaker icon to hear how to say \"thank you\" in the local language.",
+    obStart: "Get Started",
+    settingsTitle: "Edit Data",
+    settingsDesc: "You can edit the country name, language, and pronunciation for each entry. Changes are saved on this device and kept the next time you open the app.",
+    settingsSearchPlaceholder: "Search by code or name (e.g. THA / Thailand)",
+    resetAllBtn: "Reset all edits to default",
+    saveBtn: "Save",
+    rowResetBtn: "Reset to default",
+    savedFlash: "Saved",
+    resetFlash: "Reset to default",
+    resetAllConfirm: "This will reset all your edits to default. Continue?",
+    fieldJa: "Country name (Japanese)",
+    fieldLang: "Language",
+    fieldNative: 'Local "thank you"',
+    fieldKana: "Katakana reading",
+    fieldRomaji: "Romanized reading",
+    settingsMoreHint: "{n} more countries — search to view them",
+  },
+};
+
+let currentLang = localStorage.getItem('uiLang') || 'ja';
+
+function t(key) {
+  return (I18N[currentLang] && I18N[currentLang][key]) || I18N.ja[key] || key;
+}
+
+// ------------------------------------------------------------------
+// 国データ: ISO 3166-1 alpha-3コード をキーに、国名やお礼の言葉を持つ
+// alpha2 は国旗の絵文字を作るために使う
+// ------------------------------------------------------------------
+const COUNTRIES = {
+  JPN: { a2:"JP", ja:"日本", lang:"日本語", native:"ありがとうございます", romaji:"arigatou gozaimasu", kana:"アリガトウゴザイマス", en:"Japan", speechLang:"ja-JP" },
+  CHN: { a2:"CN", ja:"中国", lang:"中国語(普通話)", native:"谢谢", romaji:"xìe xìe", kana:"シエシエ", en:"China", aliases:["china", "チャイナ"], speechLang:"zh-CN" },
+  TWN: { a2:"TW", ja:"台湾", lang:"中国語(台湾華語)", native:"謝謝", romaji:"xìe xìe", kana:"シエシエ", en:"Taiwan", aliases:["taiwan", "台湾"], speechLang:"zh-TW" },
+  HKG: { a2:"HK", ja:"香港", lang:"広東語", native:"多謝", romaji:"do1 ze6", kana:"ドーツェ", en:"Hong Kong", aliases:["hong kong", "ホンコン"], speechLang:"zh-HK" },
+  MAC: { a2:"MO", ja:"マカオ", lang:"広東語", native:"多謝", romaji:"do1 ze6", kana:"ドーツェ", en:"Macau", speechLang:"zh-MO" },
+  KOR: { a2:"KR", ja:"韓国", lang:"韓国語", native:"감사합니다", romaji:"gamsahamnida", kana:"カムサハムニダ", en:"South Korea", aliases:["korea", "韓国", "コリア", "south korea"], speechLang:"ko-KR" },
+  PRK: { a2:"KP", ja:"北朝鮮", lang:"朝鮮語", native:"감사합니다", romaji:"gamsahamnida", kana:"カムサハムニダ", en:"North Korea", aliases:["north korea", "北朝鮮"], speechLang:"ko-KP" },
+  THA: { a2:"TH", ja:"タイ", lang:"タイ語", native:"ขอบคุณ", romaji:"khop khun", kana:"コープクン", en:"Thailand", speechLang:"th-TH" },
+  VNM: { a2:"VN", ja:"ベトナム", lang:"ベトナム語", native:"Cảm ơn", romaji:"cam on", kana:"カムオン", en:"Vietnam", speechLang:"vi-VN" },
+  SGP: { a2:"SG", ja:"シンガポール", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Singapore", speechLang:"en-SG" },
+  MYS: { a2:"MY", ja:"マレーシア", lang:"マレー語", native:"Terima kasih", romaji:"terima kasih", kana:"トゥリマカシ", en:"Malaysia", speechLang:"ms-MY" },
+  IDN: { a2:"ID", ja:"インドネシア", lang:"インドネシア語", native:"Terima kasih", romaji:"terima kasih", kana:"トゥリマカシ", en:"Indonesia", speechLang:"id-ID" },
+  PHL: { a2:"PH", ja:"フィリピン", lang:"フィリピノ語", native:"Salamat", romaji:"salamat", kana:"サラマット", en:"Philippines", speechLang:"fil-PH" },
+  IND: { a2:"IN", ja:"インド", lang:"ヒンディー語", native:"धन्यवाद", romaji:"dhanyavaad", kana:"ダンヤワード", en:"India", speechLang:"hi-IN" },
+  PAK: { a2:"PK", ja:"パキスタン", lang:"ウルドゥー語", native:"شکریہ", romaji:"shukriya", kana:"シュクリヤ", en:"Pakistan", speechLang:"ur-PK" },
+  BGD: { a2:"BD", ja:"バングラデシュ", lang:"ベンガル語", native:"ধন্যবাদ", romaji:"dhonnobad", kana:"ドンノバッド", en:"Bangladesh", speechLang:"bn-BD" },
+  LKA: { a2:"LK", ja:"スリランカ", lang:"シンハラ語", native:"ස්තුතියි", romaji:"sthutiyi", kana:"ストゥティイ", en:"Sri Lanka", speechLang:"si-LK" },
+  NPL: { a2:"NP", ja:"ネパール", lang:"ネパール語", native:"धन्यवाद", romaji:"dhanyabaad", kana:"ダンヤバード", en:"Nepal", speechLang:"ne-NP" },
+  MMR: { a2:"MM", ja:"ミャンマー", lang:"ビルマ語", native:"ကျေးဇူးတင်ပါတယ်", romaji:"kyay zu tin ba de", kana:"チェーズーティンバーデー", en:"Myanmar", aliases:["burma", "ビルマ"], speechLang:"my-MM" },
+  KHM: { a2:"KH", ja:"カンボジア", lang:"クメール語", native:"អរគុណ", romaji:"arkoun", kana:"オークン", en:"Cambodia", speechLang:"km-KH" },
+  LAO: { a2:"LA", ja:"ラオス", lang:"ラオス語", native:"ຂອບໃຈ", romaji:"khop chai", kana:"コープチャイ", en:"Laos", speechLang:"lo-LA" },
+  MNG: { a2:"MN", ja:"モンゴル", lang:"モンゴル語", native:"Баярлалаа", romaji:"bayarlalaa", kana:"バヤルララー", en:"Mongolia", speechLang:"mn-MN" },
+  KAZ: { a2:"KZ", ja:"カザフスタン", lang:"カザフ語", native:"Рахмет", romaji:"rakhmet", kana:"ラフメット", en:"Kazakhstan", speechLang:"kk-KZ" },
+  UZB: { a2:"UZ", ja:"ウズベキスタン", lang:"ウズベク語", native:"Rahmat", romaji:"rahmat", kana:"ラフマット", en:"Uzbekistan", speechLang:"uz-UZ" },
+  ARE: { a2:"AE", ja:"アラブ首長国連邦", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"United Arab Emirates", aliases:["uae", "dubai", "ドバイ"], speechLang:"ar-AE" },
+  SAU: { a2:"SA", ja:"サウジアラビア", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Saudi Arabia", speechLang:"ar-SA" },
+  QAT: { a2:"QA", ja:"カタール", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Qatar", speechLang:"ar-QA" },
+  KWT: { a2:"KW", ja:"クウェート", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Kuwait", speechLang:"ar-KW" },
+  ISR: { a2:"IL", ja:"イスラエル", lang:"ヘブライ語", native:"תודה", romaji:"toda", kana:"トダ", en:"Israel", speechLang:"he-IL" },
+  TUR: { a2:"TR", ja:"トルコ", lang:"トルコ語", native:"Teşekkür ederim", romaji:"teshekkur ederim", kana:"テシェッキュル エデリム", en:"Turkey", speechLang:"tr-TR" },
+  IRN: { a2:"IR", ja:"イラン", lang:"ペルシャ語", native:"متشکرم", romaji:"motshakeram", kana:"モタシャケラム", en:"Iran", speechLang:"fa-IR" },
+  AUS: { a2:"AU", ja:"オーストラリア", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Australia", speechLang:"en-AU" },
+  NZL: { a2:"NZ", ja:"ニュージーランド", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"New Zealand", speechLang:"en-NZ" },
+  GBR: { a2:"GB", ja:"イギリス", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"United Kingdom", aliases:["uk", "england", "イングランド", "britain"], speechLang:"en-GB" },
+  IRL: { a2:"IE", ja:"アイルランド", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Ireland", speechLang:"en-IE" },
+  FRA: { a2:"FR", ja:"フランス", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"France", speechLang:"fr-FR" },
+  DEU: { a2:"DE", ja:"ドイツ", lang:"ドイツ語", native:"Danke", romaji:"danke", kana:"ダンケ", en:"Germany", speechLang:"de-DE" },
+  ITA: { a2:"IT", ja:"イタリア", lang:"イタリア語", native:"Grazie", romaji:"gurattsie", kana:"グラッツィエ", en:"Italy", speechLang:"it-IT" },
+  ESP: { a2:"ES", ja:"スペイン", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Spain", speechLang:"es-ES" },
+  PRT: { a2:"PT", ja:"ポルトガル", lang:"ポルトガル語", native:"Obrigado", romaji:"obrigado", kana:"オブリガード", en:"Portugal", speechLang:"pt-PT" },
+  NLD: { a2:"NL", ja:"オランダ", lang:"オランダ語", native:"Dank je wel", romaji:"danku wel", kana:"ダンクユーウェル", en:"Netherlands", aliases:["holland"], speechLang:"nl-NL" },
+  BEL: { a2:"BE", ja:"ベルギー", lang:"オランダ語/フランス語", native:"Dank u / Merci", romaji:"danku / mersi", kana:"ダンクユー/メルシー", en:"Belgium", speechLang:"nl-BE" },
+  CHE: { a2:"CH", ja:"スイス", lang:"ドイツ語/フランス語", native:"Danke / Merci", romaji:"danke / mersi", kana:"ダンケ/メルシー", en:"Switzerland", speechLang:"de-CH" },
+  AUT: { a2:"AT", ja:"オーストリア", lang:"ドイツ語", native:"Danke", romaji:"danke", kana:"ダンケ", en:"Austria", speechLang:"de-AT" },
+  SWE: { a2:"SE", ja:"スウェーデン", lang:"スウェーデン語", native:"Tack", romaji:"takku", kana:"タック", en:"Sweden", speechLang:"sv-SE" },
+  NOR: { a2:"NO", ja:"ノルウェー", lang:"ノルウェー語", native:"Takk", romaji:"takku", kana:"タック", en:"Norway", speechLang:"nb-NO" },
+  DNK: { a2:"DK", ja:"デンマーク", lang:"デンマーク語", native:"Tak", romaji:"takku", kana:"タク", en:"Denmark", speechLang:"da-DK" },
+  FIN: { a2:"FI", ja:"フィンランド", lang:"フィンランド語", native:"Kiitos", romaji:"kiitosu", kana:"キートス", en:"Finland", speechLang:"fi-FI" },
+  POL: { a2:"PL", ja:"ポーランド", lang:"ポーランド語", native:"Dziękuję", romaji:"jienkuye", kana:"ジェンクィエ", en:"Poland", speechLang:"pl-PL" },
+  CZE: { a2:"CZ", ja:"チェコ", lang:"チェコ語", native:"Děkuji", romaji:"jekui", kana:"ジェクユィ", en:"Czech Republic", aliases:["czechia"], speechLang:"cs-CZ" },
+  SVK: { a2:"SK", ja:"スロバキア", lang:"スロバキア語", native:"Ďakujem", romaji:"jakuyem", kana:"ジャクイェム", en:"Slovakia", speechLang:"sk-SK" },
+  HUN: { a2:"HU", ja:"ハンガリー", lang:"ハンガリー語", native:"Köszönöm", romaji:"kösönöm", kana:"クォソヌム", en:"Hungary", speechLang:"hu-HU" },
+  ROU: { a2:"RO", ja:"ルーマニア", lang:"ルーマニア語", native:"Mulțumesc", romaji:"multsumesk", kana:"ムルツメスク", en:"Romania", speechLang:"ro-RO" },
+  BGR: { a2:"BG", ja:"ブルガリア", lang:"ブルガリア語", native:"Благодаря", romaji:"blagodarya", kana:"ブラゴダリャ", en:"Bulgaria", speechLang:"bg-BG" },
+  GRC: { a2:"GR", ja:"ギリシャ", lang:"ギリシャ語", native:"Ευχαριστώ", romaji:"efharisto", kana:"エフハリスト", en:"Greece", speechLang:"el-GR" },
+  RUS: { a2:"RU", ja:"ロシア", lang:"ロシア語", native:"Спасибо", romaji:"spasibo", kana:"スパシーバ", en:"Russia", aliases:["russia"], speechLang:"ru-RU" },
+  UKR: { a2:"UA", ja:"ウクライナ", lang:"ウクライナ語", native:"Дякую", romaji:"dyakuyu", kana:"ジャークユ", en:"Ukraine", speechLang:"uk-UA" },
+  HRV: { a2:"HR", ja:"クロアチア", lang:"クロアチア語", native:"Hvala", romaji:"hvala", kana:"フヴァーラ", en:"Croatia", speechLang:"hr-HR" },
+  SRB: { a2:"RS", ja:"セルビア", lang:"セルビア語", native:"Хвала", romaji:"hvala", kana:"フヴァーラ", en:"Serbia", speechLang:"sr-RS" },
+  SVN: { a2:"SI", ja:"スロベニア", lang:"スロベニア語", native:"Hvala", romaji:"hvala", kana:"フヴァーラ", en:"Slovenia", speechLang:"sl-SI" },
+  LTU: { a2:"LT", ja:"リトアニア", lang:"リトアニア語", native:"Ačiū", romaji:"achyu", kana:"アチュー", en:"Lithuania", speechLang:"lt-LT" },
+  LVA: { a2:"LV", ja:"ラトビア", lang:"ラトビア語", native:"Paldies", romaji:"paldies", kana:"パルディエス", en:"Latvia", speechLang:"lv-LV" },
+  EST: { a2:"EE", ja:"エストニア", lang:"エストニア語", native:"Aitäh", romaji:"aitah", kana:"アイタァ", en:"Estonia", speechLang:"et-EE" },
+  ISL: { a2:"IS", ja:"アイスランド", lang:"アイスランド語", native:"Takk", romaji:"takku", kana:"タック", en:"Iceland", speechLang:"is-IS" },
+  USA: { a2:"US", ja:"アメリカ合衆国", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"United States", aliases:["america", "アメリカ", "米国", "us", "usa"], speechLang:"en-US" },
+  CAN: { a2:"CA", ja:"カナダ", lang:"英語/フランス語", native:"Thank you / Merci", romaji:"サンキュー / mersi", kana:"サンキュー/メルシー", en:"Canada", speechLang:"en-CA" },
+  MEX: { a2:"MX", ja:"メキシコ", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Mexico", speechLang:"es-MX" },
+  BRA: { a2:"BR", ja:"ブラジル", lang:"ポルトガル語", native:"Obrigado", romaji:"obrigado", kana:"オブリガード", en:"Brazil", speechLang:"pt-BR" },
+  ARG: { a2:"AR", ja:"アルゼンチン", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Argentina", speechLang:"es-AR" },
+  CHL: { a2:"CL", ja:"チリ", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Chile", speechLang:"es-CL" },
+  COL: { a2:"CO", ja:"コロンビア", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Colombia", speechLang:"es-CO" },
+  PER: { a2:"PE", ja:"ペルー", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Peru", speechLang:"es-PE" },
+  ZAF: { a2:"ZA", ja:"南アフリカ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"South Africa", speechLang:"en-ZA" },
+  EGY: { a2:"EG", ja:"エジプト", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Egypt", speechLang:"ar-EG" },
+  MAR: { a2:"MA", ja:"モロッコ", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Morocco", speechLang:"ar-MA" },
+  NGA: { a2:"NG", ja:"ナイジェリア", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Nigeria", speechLang:"en-NG" },
+  KEN: { a2:"KE", ja:"ケニア", lang:"スワヒリ語", native:"Asante", romaji:"asante", kana:"アサンテ", en:"Kenya", speechLang:"sw-KE" },
+
+  // ---- アジア(追加分) ----
+  AFG: { a2:"AF", ja:"アフガニスタン", lang:"パシュトー語/ダリー語", native:"تشکر", romaji:"tashakor", kana:"タシャコル", en:"Afghanistan", speechLang:"ps-AF" },
+  BHR: { a2:"BH", ja:"バーレーン", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Bahrain", speechLang:"ar-BH" },
+  BRN: { a2:"BN", ja:"ブルネイ", lang:"マレー語", native:"Terima kasih", romaji:"terima kasih", kana:"トゥリマカシ", en:"Brunei", speechLang:"ms-BN" },
+  BTN: { a2:"BT", ja:"ブータン", lang:"ゾンカ語", native:"ཐུགས་རྗེ་ཆེ", romaji:"thuji che", kana:"トゥジチェ", en:"Bhutan", speechLang:"dz-BT" },
+  CYP: { a2:"CY", ja:"キプロス", lang:"ギリシャ語", native:"Ευχαριστώ", romaji:"efharisto", kana:"エフハリスト", en:"Cyprus", speechLang:"el-CY" },
+  GEO: { a2:"GE", ja:"ジョージア", lang:"ジョージア語", native:"გმადლობთ", romaji:"gmadlobt", kana:"グマドロブト", en:"Georgia", speechLang:"ka-GE" },
+  ARM: { a2:"AM", ja:"アルメニア", lang:"アルメニア語", native:"Շնորհակալություն", romaji:"shnorhakalutyun", kana:"シュノルハカルトゥユン", en:"Armenia", speechLang:"hy-AM" },
+  AZE: { a2:"AZ", ja:"アゼルバイジャン", lang:"アゼルバイジャン語", native:"Sağ olun", romaji:"sagh olun", kana:"サーオルン", en:"Azerbaijan", speechLang:"az-AZ" },
+  IRQ: { a2:"IQ", ja:"イラク", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Iraq", speechLang:"ar-IQ" },
+  JOR: { a2:"JO", ja:"ヨルダン", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Jordan", speechLang:"ar-JO" },
+  KGZ: { a2:"KG", ja:"キルギス", lang:"キルギス語", native:"Рахмат", romaji:"rakhmat", kana:"ラフマット", en:"Kyrgyzstan", speechLang:"ky-KG" },
+  LBN: { a2:"LB", ja:"レバノン", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Lebanon", speechLang:"ar-LB" },
+  MDV: { a2:"MV", ja:"モルディブ", lang:"ディベヒ語", native:"ޝުކުރިއްޔާ", romaji:"shukuriyaa", kana:"シュクリーヤ", en:"Maldives", speechLang:"dv-MV" },
+  OMN: { a2:"OM", ja:"オマーン", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Oman", speechLang:"ar-OM" },
+  PSE: { a2:"PS", ja:"パレスチナ", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Palestine", speechLang:"ar-PS" },
+  SYR: { a2:"SY", ja:"シリア", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Syria", speechLang:"ar-SY" },
+  TJK: { a2:"TJ", ja:"タジキスタン", lang:"タジク語", native:"Рахмат", romaji:"rahmat", kana:"ラフマット", en:"Tajikistan", speechLang:"tg-TJ" },
+  TKM: { a2:"TM", ja:"トルクメニスタン", lang:"トルクメン語", native:"Sag boluň", romaji:"sag bolung", kana:"サグボルング", en:"Turkmenistan", speechLang:"tk-TM" },
+  TLS: { a2:"TL", ja:"東ティモール", lang:"テトゥン語/ポルトガル語", native:"Obrigado", romaji:"obrigado", kana:"オブリガード", en:"Timor-Leste", speechLang:"pt-TL" },
+  YEM: { a2:"YE", ja:"イエメン", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Yemen", speechLang:"ar-YE" },
+
+  // ---- ヨーロッパ(追加分) ----
+  ALB: { a2:"AL", ja:"アルバニア", lang:"アルバニア語", native:"Faleminderit", romaji:"faleminderit", kana:"ファレミンデリット", en:"Albania", speechLang:"sq-AL" },
+  AND: { a2:"AD", ja:"アンドラ", lang:"カタルーニャ語", native:"Gràcies", romaji:"gurashies", kana:"グラシエス", en:"Andorra", speechLang:"ca-AD" },
+  BIH: { a2:"BA", ja:"ボスニア・ヘルツェゴビナ", lang:"ボスニア語", native:"Hvala", romaji:"hvala", kana:"フヴァーラ", en:"Bosnia and Herzegovina", speechLang:"bs-BA" },
+  BLR: { a2:"BY", ja:"ベラルーシ", lang:"ベラルーシ語", native:"Дзякуй", romaji:"dzyakuy", kana:"ジャクイ", en:"Belarus", speechLang:"be-BY" },
+  LIE: { a2:"LI", ja:"リヒテンシュタイン", lang:"ドイツ語", native:"Danke", romaji:"danke", kana:"ダンケ", en:"Liechtenstein", speechLang:"de-LI" },
+  LUX: { a2:"LU", ja:"ルクセンブルク", lang:"ルクセンブルク語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Luxembourg", speechLang:"fr-LU" },
+  MDA: { a2:"MD", ja:"モルドバ", lang:"ルーマニア語", native:"Mulțumesc", romaji:"multsumesk", kana:"ムルツメスク", en:"Moldova", speechLang:"ro-MD" },
+  MCO: { a2:"MC", ja:"モナコ", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Monaco", speechLang:"fr-MC" },
+  MNE: { a2:"ME", ja:"モンテネグロ", lang:"モンテネグロ語", native:"Hvala", romaji:"hvala", kana:"フヴァーラ", en:"Montenegro", speechLang:"sr-ME" },
+  MKD: { a2:"MK", ja:"北マケドニア", lang:"マケドニア語", native:"Благодарам", romaji:"blagodaram", kana:"ブラゴダラム", en:"North Macedonia", speechLang:"mk-MK" },
+  MLT: { a2:"MT", ja:"マルタ", lang:"マルタ語", native:"Grazzi", romaji:"gratsi", kana:"グラッツィ", en:"Malta", speechLang:"mt-MT" },
+  SMR: { a2:"SM", ja:"サンマリノ", lang:"イタリア語", native:"Grazie", romaji:"gurattsie", kana:"グラッツィエ", en:"San Marino", speechLang:"it-SM" },
+  VAT: { a2:"VA", ja:"バチカン", lang:"イタリア語", native:"Grazie", romaji:"gurattsie", kana:"グラッツィエ", en:"Vatican City", speechLang:"it-VA" },
+
+  // ---- アフリカ(追加分) ----
+  DZA: { a2:"DZ", ja:"アルジェリア", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Algeria", speechLang:"ar-DZ" },
+  AGO: { a2:"AO", ja:"アンゴラ", lang:"ポルトガル語", native:"Obrigado", romaji:"obrigado", kana:"オブリガード", en:"Angola", speechLang:"pt-AO" },
+  BEN: { a2:"BJ", ja:"ベナン", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Benin", speechLang:"fr-BJ" },
+  BWA: { a2:"BW", ja:"ボツワナ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Botswana", speechLang:"en-BW" },
+  BFA: { a2:"BF", ja:"ブルキナファソ", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Burkina Faso", speechLang:"fr-BF" },
+  BDI: { a2:"BI", ja:"ブルンジ", lang:"キルンディ語", native:"Murakoze", romaji:"murakoze", kana:"ムラコゼ", en:"Burundi", speechLang:"rn-BI" },
+  CMR: { a2:"CM", ja:"カメルーン", lang:"フランス語/英語", native:"Merci / Thank you", romaji:"mersi", kana:"メルシー/サンキュー", en:"Cameroon", speechLang:"fr-CM" },
+  CPV: { a2:"CV", ja:"カーボベルデ", lang:"ポルトガル語", native:"Obrigado", romaji:"obrigado", kana:"オブリガード", en:"Cabo Verde", speechLang:"pt-CV" },
+  CAF: { a2:"CF", ja:"中央アフリカ共和国", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Central African Republic", speechLang:"fr-CF" },
+  TCD: { a2:"TD", ja:"チャド", lang:"フランス語/アラビア語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Chad", speechLang:"fr-TD" },
+  COM: { a2:"KM", ja:"コモロ", lang:"コモロ語/フランス語", native:"Marahaba", romaji:"marahaba", kana:"マラハバ", en:"Comoros", speechLang:"ar-KM" },
+  COG: { a2:"CG", ja:"コンゴ共和国", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Congo", aliases:["congo"], speechLang:"fr-CG" },
+  COD: { a2:"CD", ja:"コンゴ民主共和国", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"DR Congo", aliases:["congo"], speechLang:"fr-CD" },
+  CIV: { a2:"CI", ja:"コートジボワール", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Ivory Coast", aliases:["ivory coast", "cote d'ivoire"], speechLang:"fr-CI" },
+  DJI: { a2:"DJ", ja:"ジブチ", lang:"フランス語/アラビア語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Djibouti", speechLang:"fr-DJ" },
+  GNQ: { a2:"GQ", ja:"赤道ギニア", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Equatorial Guinea", speechLang:"es-GQ" },
+  ERI: { a2:"ER", ja:"エリトリア", lang:"ティグリニャ語", native:"የቐንየለይ", romaji:"yeqenyeley", kana:"イェケニェレイ", en:"Eritrea", speechLang:"ti-ER" },
+  SWZ: { a2:"SZ", ja:"エスワティニ", lang:"スワジ語", native:"Ngiyabonga", romaji:"ngiyabonga", kana:"ンギヤボンガ", en:"Eswatini", speechLang:"ss-SZ" },
+  ETH: { a2:"ET", ja:"エチオピア", lang:"アムハラ語", native:"አመሰግናለሁ", romaji:"ameseginalehu", kana:"アメセグナレフ", en:"Ethiopia", speechLang:"am-ET" },
+  GAB: { a2:"GA", ja:"ガボン", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Gabon", speechLang:"fr-GA" },
+  GMB: { a2:"GM", ja:"ガンビア", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Gambia", speechLang:"en-GM" },
+  GHA: { a2:"GH", ja:"ガーナ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Ghana", speechLang:"en-GH" },
+  GIN: { a2:"GN", ja:"ギニア", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Guinea", speechLang:"fr-GN" },
+  GNB: { a2:"GW", ja:"ギニアビサウ", lang:"ポルトガル語", native:"Obrigado", romaji:"obrigado", kana:"オブリガード", en:"Guinea-Bissau", speechLang:"pt-GW" },
+  LSO: { a2:"LS", ja:"レソト", lang:"ソト語", native:"Kea leboha", romaji:"kea leboha", kana:"ケアレボハ", en:"Lesotho", speechLang:"st-LS" },
+  LBR: { a2:"LR", ja:"リベリア", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Liberia", speechLang:"en-LR" },
+  LBY: { a2:"LY", ja:"リビア", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Libya", speechLang:"ar-LY" },
+  MDG: { a2:"MG", ja:"マダガスカル", lang:"マダガスカル語", native:"Misaotra", romaji:"misaotra", kana:"ミサオトラ", en:"Madagascar", speechLang:"mg-MG" },
+  MWI: { a2:"MW", ja:"マラウイ", lang:"チェワ語", native:"Zikomo", romaji:"zikomo", kana:"ジコモ", en:"Malawi", speechLang:"ny-MW" },
+  MLI: { a2:"ML", ja:"マリ", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Mali", speechLang:"fr-ML" },
+  MRT: { a2:"MR", ja:"モーリタニア", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Mauritania", speechLang:"ar-MR" },
+  MUS: { a2:"MU", ja:"モーリシャス", lang:"英語/フランス語", native:"Thank you / Merci", romaji:"サンキュー", kana:"サンキュー/メルシー", en:"Mauritius", speechLang:"en-MU" },
+  MOZ: { a2:"MZ", ja:"モザンビーク", lang:"ポルトガル語", native:"Obrigado", romaji:"obrigado", kana:"オブリガード", en:"Mozambique", speechLang:"pt-MZ" },
+  NAM: { a2:"NA", ja:"ナミビア", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Namibia", speechLang:"en-NA" },
+  NER: { a2:"NE", ja:"ニジェール", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Niger", speechLang:"fr-NE" },
+  RWA: { a2:"RW", ja:"ルワンダ", lang:"キニヤルワンダ語", native:"Murakoze", romaji:"murakoze", kana:"ムラコゼ", en:"Rwanda", speechLang:"rw-RW" },
+  STP: { a2:"ST", ja:"サントメ・プリンシペ", lang:"ポルトガル語", native:"Obrigado", romaji:"obrigado", kana:"オブリガード", en:"Sao Tome and Principe", speechLang:"pt-ST" },
+  SEN: { a2:"SN", ja:"セネガル", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Senegal", speechLang:"fr-SN" },
+  SYC: { a2:"SC", ja:"セーシェル", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Seychelles", speechLang:"fr-SC" },
+  SLE: { a2:"SL", ja:"シエラレオネ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Sierra Leone", speechLang:"en-SL" },
+  SOM: { a2:"SO", ja:"ソマリア", lang:"ソマリ語", native:"Mahadsanid", romaji:"mahadsanid", kana:"マハドサニド", en:"Somalia", speechLang:"so-SO" },
+  SSD: { a2:"SS", ja:"南スーダン", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"South Sudan", speechLang:"en-SS" },
+  SDN: { a2:"SD", ja:"スーダン", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Sudan", speechLang:"ar-SD" },
+  TZA: { a2:"TZ", ja:"タンザニア", lang:"スワヒリ語", native:"Asante", romaji:"asante", kana:"アサンテ", en:"Tanzania", speechLang:"sw-TZ" },
+  TGO: { a2:"TG", ja:"トーゴ", lang:"フランス語", native:"Merci", romaji:"mersi", kana:"メルシー", en:"Togo", speechLang:"fr-TG" },
+  TUN: { a2:"TN", ja:"チュニジア", lang:"アラビア語", native:"شكرا", romaji:"shukran", kana:"シュクラン", en:"Tunisia", speechLang:"ar-TN" },
+  UGA: { a2:"UG", ja:"ウガンダ", lang:"スワヒリ語", native:"Asante", romaji:"asante", kana:"アサンテ", en:"Uganda", speechLang:"sw-UG" },
+  ZMB: { a2:"ZM", ja:"ザンビア", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Zambia", speechLang:"en-ZM" },
+  ZWE: { a2:"ZW", ja:"ジンバブエ", lang:"英語/ショナ語", native:"Thank you / Maita basa", romaji:"サンキュー", kana:"サンキュー/マイタバサ", en:"Zimbabwe", speechLang:"en-ZW" },
+
+  // ---- 南北アメリカ(追加分) ----
+  ATG: { a2:"AG", ja:"アンティグア・バーブーダ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Antigua and Barbuda", speechLang:"en-AG" },
+  BHS: { a2:"BS", ja:"バハマ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Bahamas", speechLang:"en-BS" },
+  BRB: { a2:"BB", ja:"バルバドス", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Barbados", speechLang:"en-BB" },
+  BLZ: { a2:"BZ", ja:"ベリーズ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Belize", speechLang:"en-BZ" },
+  BOL: { a2:"BO", ja:"ボリビア", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Bolivia", speechLang:"es-BO" },
+  CRI: { a2:"CR", ja:"コスタリカ", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Costa Rica", speechLang:"es-CR" },
+  CUB: { a2:"CU", ja:"キューバ", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Cuba", speechLang:"es-CU" },
+  DMA: { a2:"DM", ja:"ドミニカ国", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Dominica", speechLang:"en-DM" },
+  DOM: { a2:"DO", ja:"ドミニカ共和国", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Dominican Republic", speechLang:"es-DO" },
+  ECU: { a2:"EC", ja:"エクアドル", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Ecuador", speechLang:"es-EC" },
+  SLV: { a2:"SV", ja:"エルサルバドル", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"El Salvador", speechLang:"es-SV" },
+  GRD: { a2:"GD", ja:"グレナダ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Grenada", speechLang:"en-GD" },
+  GTM: { a2:"GT", ja:"グアテマラ", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Guatemala", speechLang:"es-GT" },
+  GUY: { a2:"GY", ja:"ガイアナ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Guyana", speechLang:"en-GY" },
+  HTI: { a2:"HT", ja:"ハイチ", lang:"フランス語/クレオール語", native:"Mèsi", romaji:"mesi", kana:"メシ", en:"Haiti", speechLang:"fr-HT" },
+  HND: { a2:"HN", ja:"ホンジュラス", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Honduras", speechLang:"es-HN" },
+  JAM: { a2:"JM", ja:"ジャマイカ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Jamaica", speechLang:"en-JM" },
+  NIC: { a2:"NI", ja:"ニカラグア", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Nicaragua", speechLang:"es-NI" },
+  PAN: { a2:"PA", ja:"パナマ", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Panama", speechLang:"es-PA" },
+  PRY: { a2:"PY", ja:"パラグアイ", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Paraguay", speechLang:"es-PY" },
+  KNA: { a2:"KN", ja:"セントクリストファー・ネイビス", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Saint Kitts and Nevis", speechLang:"en-KN" },
+  LCA: { a2:"LC", ja:"セントルシア", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Saint Lucia", speechLang:"en-LC" },
+  VCT: { a2:"VC", ja:"セントビンセント・グレナディーン", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Saint Vincent and the Grenadines", speechLang:"en-VC" },
+  SUR: { a2:"SR", ja:"スリナム", lang:"オランダ語", native:"Dank je wel", romaji:"danku wel", kana:"ダンクユーウェル", en:"Suriname", speechLang:"nl-SR" },
+  TTO: { a2:"TT", ja:"トリニダード・トバゴ", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Trinidad and Tobago", speechLang:"en-TT" },
+  URY: { a2:"UY", ja:"ウルグアイ", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Uruguay", speechLang:"es-UY" },
+  VEN: { a2:"VE", ja:"ベネズエラ", lang:"スペイン語", native:"Gracias", romaji:"gurashiasu", kana:"グラシアス", en:"Venezuela", speechLang:"es-VE" },
+
+  // ---- オセアニア(追加分) ----
+  FJI: { a2:"FJ", ja:"フィジー", lang:"英語/フィジー語", native:"Vinaka", romaji:"vinaka", kana:"ヴィナカ", en:"Fiji", speechLang:"en-FJ" },
+  KIR: { a2:"KI", ja:"キリバス", lang:"ギルバート語", native:"Ko rabwa", romaji:"ko rabwa", kana:"コラブワ", en:"Kiribati", speechLang:"en-KI" },
+  MHL: { a2:"MH", ja:"マーシャル諸島", lang:"マーシャル語", native:"Kommol tata", romaji:"kommol tata", kana:"コモルタタ", en:"Marshall Islands", speechLang:"mh-MH" },
+  FSM: { a2:"FM", ja:"ミクロネシア連邦", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Micronesia", speechLang:"en-FM" },
+  NRU: { a2:"NR", ja:"ナウル", lang:"ナウル語/英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Nauru", speechLang:"en-NR" },
+  PLW: { a2:"PW", ja:"パラオ", lang:"パラオ語", native:"Sulang", romaji:"sulang", kana:"スーラング", en:"Palau", speechLang:"en-PW" },
+  PNG: { a2:"PG", ja:"パプアニューギニア", lang:"トク・ピシン語", native:"Tenkyu", romaji:"tenkyu", kana:"テンキュー", en:"Papua New Guinea", speechLang:"tpi-PG" },
+  WSM: { a2:"WS", ja:"サモア", lang:"サモア語", native:"Fa'afetai", romaji:"fa'afetai", kana:"ファアフェタイ", en:"Samoa", speechLang:"sm-WS" },
+  SLB: { a2:"SB", ja:"ソロモン諸島", lang:"英語", native:"Thank you", romaji:"サンキュー", kana:"サンキュー", en:"Solomon Islands", speechLang:"en-SB" },
+  TON: { a2:"TO", ja:"トンガ", lang:"トンガ語", native:"Malo", romaji:"malo", kana:"マロ", en:"Tonga", speechLang:"to-TO" },
+  TUV: { a2:"TV", ja:"ツバル", lang:"ツバル語/英語", native:"Fakafetai", romaji:"fakafetai", kana:"ファカフェタイ", en:"Tuvalu", speechLang:"en-TV" },
+  VUT: { a2:"VU", ja:"バヌアツ", lang:"ビスラマ語", native:"Tank yu", romaji:"tanku yu", kana:"タンキュー", en:"Vanuatu", speechLang:"bi-VU" },
+};
+
+// ------------------------------------------------------------------
+// 編集機能: 設定画面で編集した内容はlocalStorageに保存し、
+// 次回起動時にもCOUNTRIESへ上書き反映する
+// ------------------------------------------------------------------
+const ORIGINAL_COUNTRIES = JSON.parse(JSON.stringify(COUNTRIES)); // 初期値を保持しておく(リセット用)
+const OVERRIDES_KEY = 'countryOverrides';
+const EDITABLE_FIELDS = ['ja', 'lang', 'native', 'kana', 'romaji'];
+
+function loadOverrides() {
+  try {
+    const raw = localStorage.getItem(OVERRIDES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveOverrides(overrides) {
+  try {
+    localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+  } catch (e) {
+    console.error('保存に失敗しました', e);
+  }
+}
+
+// 保存済みの編集内容をCOUNTRIESに適用する
+function applyOverrides() {
+  const overrides = loadOverrides();
+  Object.keys(overrides).forEach(code => {
+    if (COUNTRIES[code]) {
+      Object.assign(COUNTRIES[code], overrides[code]);
+    }
+  });
+}
+applyOverrides();
+
+// よく調べられそうな国を優先してクイックボタンに並べる
+const QUICK_CODES = ["CHN","TWN","HKG","KOR","THA","VNM","USA","GBR","AUS","SGP","PHL","IDN"];
+
+// alpha2コード(例: "JP")から国旗の絵文字を作る
+// 各アルファベットを「地域指示記号(regional indicator symbol)」という
+// Unicode文字に変換して2つ並べると、ブラウザが国旗として表示してくれる
+function flagEmoji(a2) {
+  const codePoints = [...a2.toUpperCase()].map(c => 0x1f1e6 + (c.charCodeAt(0) - 65));
+  return String.fromCodePoint(...codePoints);
+}
+
+const input = document.getElementById('codeInput');
+const resultZone = document.getElementById('resultZone');
+const quickChips = document.getElementById('quickChips');
+let lastResultInfo = null; // 直近に表示した国データ(言語切り替え時の再描画用)
+
+// クイックアクセスボタンを生成
+QUICK_CODES.forEach(code => {
+  const info = COUNTRIES[code];
+  const btn = document.createElement('button');
+  btn.className = 'chip';
+  btn.textContent = `${flagEmoji(info.a2)} ${code}`;
+  btn.addEventListener('click', () => {
+    input.value = code;
+    lookup(code);
+  });
+  quickChips.appendChild(btn);
+});
+
+function showPlaceholder() {
+  resultZone.innerHTML = `<div class="placeholder">${t('resultPlaceholder')}</div>`;
+}
+
+// スマホの音声合成機能を使って、現地語の発音を読み上げる
+function speakPhrase(text, lang) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel(); // 連打された場合、前の読み上げをキャンセルしてから話す
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  utterance.rate = 0.9;
+  window.speechSynthesis.speak(utterance);
+}
+
+function showStamp(info) {
+  lastResultInfo = info; // 言語切り替え時に再描画するため記憶しておく
+  const countryName = currentLang === 'en' ? (info.en || info.ja) : info.ja;
+  // 英語モードでは、カタカナ読みの代わりにローマ字読みを主役にする
+  const secondaryReading = currentLang === 'en'
+    ? `<div class="thanks-romaji">${info.romaji}</div>`
+    : `<div class="thanks-kana">${info.kana}</div><div class="thanks-romaji">${info.romaji}</div>`;
+
+  resultZone.innerHTML = `
+    <div class="stamp">
+      <div class="flag">${flagEmoji(info.a2)}</div>
+      <div class="country-ja">${countryName}</div>
+      <div class="lang-name">${info.lang}</div>
+      <div class="divider"></div>
+      <div class="thanks-label">${t('thanksLabel')}</div>
+      <div class="thanks-native-row">
+        <div class="thanks-native">${info.native}</div>
+        <button class="speak-btn" aria-label="${t('playPronunciation')}">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 9v6h4l5 5V4L8 9H4Z"/>
+            <path d="M16.5 8.5a5 5 0 0 1 0 7"/>
+            <path d="M19 6a9 9 0 0 1 0 12"/>
+          </svg>
+        </button>
+      </div>
+      ${secondaryReading}
+    </div>
+  `;
+
+  const speakBtn = resultZone.querySelector('.speak-btn');
+  if (speakBtn) {
+    speakBtn.addEventListener('click', () => speakPhrase(info.native, info.speechLang));
+  }
+}
+
+function showNotFound(code) {
+  resultZone.innerHTML = `
+    <div class="not-found">
+      <span class="code-echo">${code}</span>
+      ${t('notFoundMsg')}
+    </div>
+  `;
+  input.classList.remove('shake');
+  // 強制的に再描画させてからアニメーションを再度かける(連続シェイク対応)
+  void input.offsetWidth;
+  input.classList.add('shake');
+}
+
+function lookup(rawCode) {
+  const code = rawCode.trim().toUpperCase();
+  if (code.length === 0) {
+    showPlaceholder();
+    return;
+  }
+  if (code.length < 3) {
+    // 3文字そろうまでは何も表示しない
+    return;
+  }
+  const info = COUNTRIES[code];
+  if (info) {
+    showStamp(info);
+  } else {
+    showNotFound(code);
+  }
+}
+
+input.addEventListener('input', (e) => {
+  // 常に大文字に変換し、アルファベット以外は除去する
+  const cleaned = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+  e.target.value = cleaned;
+  lookup(cleaned);
+});
+
+// ------------------------------------------------------------------
+// タブ切り替え(コードで調べる / 名前で調べる)
+// ------------------------------------------------------------------
+const tabCode = document.getElementById('tabCode');
+const tabName = document.getElementById('tabName');
+const panelCode = document.getElementById('panelCode');
+const panelName = document.getElementById('panelName');
+const nameInput = document.getElementById('nameInput');
+const nameResults = document.getElementById('nameResults');
+
+function switchTab(tab) {
+  const isCode = tab === 'code';
+  tabCode.classList.toggle('active', isCode);
+  tabName.classList.toggle('active', !isCode);
+  panelCode.style.display = isCode ? '' : 'none';
+  panelName.style.display = isCode ? 'none' : '';
+  if (isCode) {
+    input.focus();
+  } else {
+    nameInput.focus();
+  }
+}
+
+tabCode.addEventListener('click', () => switchTab('code'));
+tabName.addEventListener('click', () => switchTab('name'));
+
+// ------------------------------------------------------------------
+// 名前からの逆引き検索: 日本語名・英語名・カタカナ表記(別名)のいずれでも探せる
+// ------------------------------------------------------------------
+function searchByName(query) {
+  const q = query.trim();
+  if (q.length === 0) {
+    nameResults.innerHTML = '';
+    return;
+  }
+  const qLower = q.toLowerCase();
+
+  const matches = Object.keys(COUNTRIES).filter(code => {
+    const info = COUNTRIES[code];
+    if (code.toUpperCase() === q.toUpperCase()) return true;
+    if (info.ja.includes(q)) return true;
+    if (info.en && info.en.toLowerCase().includes(qLower)) return true;
+    if (info.aliases && info.aliases.some(alias => alias.toLowerCase().includes(qLower))) return true;
+    return false;
+  });
+
+  if (matches.length === 0) {
+    nameResults.innerHTML = `<div class="no-results">${t('noNameResults')}</div>`;
+    return;
+  }
+
+  nameResults.innerHTML = '';
+  matches.slice(0, 30).forEach(code => {
+    const info = COUNTRIES[code];
+    const displayName = currentLang === 'en' ? (info.en || info.ja) : info.ja;
+    const row = document.createElement('button');
+    row.className = 'name-result-row';
+    row.innerHTML = `
+      <span class="name-result-flag">${flagEmoji(info.a2)}</span>
+      <span class="name-result-ja">${displayName}</span>
+      <span class="name-result-code">${code}</span>
+    `;
+    row.addEventListener('click', () => {
+      showStamp(info);
+      resultZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    nameResults.appendChild(row);
+  });
+}
+
+nameInput.addEventListener('input', (e) => {
+  searchByName(e.target.value);
+});
+
+// ページを開いたらすぐ入力できるようにフォーカスしておく
+input.focus();
+
+// ------------------------------------------------------------------
+// 設定モーダル: 国データの編集画面
+// ------------------------------------------------------------------
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsOverlay = document.getElementById('settingsOverlay');
+const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+const settingsSearch = document.getElementById('settingsSearch');
+const settingsList = document.getElementById('settingsList');
+const resetAllBtn = document.getElementById('resetAllBtn');
+
+function fieldLabel(field) {
+  const map = { ja: 'fieldJa', lang: 'fieldLang', native: 'fieldNative', kana: 'fieldKana', romaji: 'fieldRomaji' };
+  return t(map[field]);
+}
+
+function openSettings() {
+  settingsOverlay.classList.add('open');
+  renderSettingsList('');
+  settingsSearch.value = '';
+  settingsSearch.focus();
+}
+
+function closeSettings() {
+  settingsOverlay.classList.remove('open');
+}
+
+settingsBtn.addEventListener('click', openSettings);
+settingsCloseBtn.addEventListener('click', closeSettings);
+// オーバーレイの背景(パネルの外側)をタップしても閉じられるようにする
+settingsOverlay.addEventListener('click', (e) => {
+  if (e.target === settingsOverlay) closeSettings();
+});
+
+function buildSettingsRow(code) {
+  const info = COUNTRIES[code];
+  const row = document.createElement('div');
+  row.className = 'settings-row';
+
+  const head = document.createElement('div');
+  head.className = 'settings-row-head';
+  head.innerHTML = `<span class="settings-row-flag">${flagEmoji(info.a2)}</span><span class="settings-row-code">${code}</span>`;
+  row.appendChild(head);
+
+  const inputs = {};
+  EDITABLE_FIELDS.forEach(field => {
+    const wrap = document.createElement('div');
+    wrap.className = 'settings-field';
+    const label = document.createElement('label');
+    label.textContent = fieldLabel(field);
+    const fieldInput = document.createElement('input');
+    fieldInput.type = 'text';
+    fieldInput.value = info[field];
+    wrap.appendChild(label);
+    wrap.appendChild(fieldInput);
+    row.appendChild(wrap);
+    inputs[field] = fieldInput;
+  });
+
+  const actions = document.createElement('div');
+  actions.className = 'settings-row-actions';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'save-btn';
+  saveBtn.textContent = t('saveBtn');
+
+  const rowResetBtn = document.createElement('button');
+  rowResetBtn.className = 'row-reset-btn';
+  rowResetBtn.textContent = t('rowResetBtn');
+
+  actions.appendChild(saveBtn);
+  actions.appendChild(rowResetBtn);
+  row.appendChild(actions);
+
+  const flash = document.createElement('div');
+  flash.className = 'saved-flash';
+  row.appendChild(flash);
+
+  function flashMessage(text) {
+    flash.textContent = text;
+    setTimeout(() => { flash.textContent = ''; }, 1500);
+  }
+
+  saveBtn.addEventListener('click', () => {
+    const overrides = loadOverrides();
+    overrides[code] = overrides[code] || {};
+    EDITABLE_FIELDS.forEach(field => {
+      const value = inputs[field].value.trim();
+      COUNTRIES[code][field] = value;
+      overrides[code][field] = value;
+    });
+    saveOverrides(overrides);
+    flashMessage(t('savedFlash'));
+  });
+
+  rowResetBtn.addEventListener('click', () => {
+    const original = ORIGINAL_COUNTRIES[code];
+    EDITABLE_FIELDS.forEach(field => {
+      inputs[field].value = original[field];
+      COUNTRIES[code][field] = original[field];
+    });
+    const overrides = loadOverrides();
+    delete overrides[code];
+    saveOverrides(overrides);
+    flashMessage(t('resetFlash'));
+  });
+
+  return row;
+}
+
+function renderSettingsList(filterText) {
+  const query = filterText.trim().toUpperCase();
+  settingsList.innerHTML = '';
+
+  const codes = Object.keys(COUNTRIES).filter(code => {
+    if (!query) return true;
+    const info = COUNTRIES[code];
+    return code.includes(query) || info.ja.toUpperCase().includes(query);
+  });
+
+  if (codes.length === 0) {
+    settingsList.innerHTML = `<div class="no-results">${t('noNameResults')}</div>`;
+    return;
+  }
+
+  // 検索していないときは件数が多いので、全件表示だと重いため
+  // 未入力時はクイックアクセスの国 + 先頭50件程度に絞って表示する
+  const codesToShow = query ? codes : codes.slice(0, 50);
+
+  codesToShow.forEach(code => {
+    settingsList.appendChild(buildSettingsRow(code));
+  });
+
+  if (!query && codes.length > codesToShow.length) {
+    const hint = document.createElement('div');
+    hint.className = 'no-results';
+    hint.textContent = t('settingsMoreHint').replace('{n}', codes.length - codesToShow.length);
+    settingsList.appendChild(hint);
+  }
+}
+
+settingsSearch.addEventListener('input', (e) => {
+  renderSettingsList(e.target.value);
+});
+
+resetAllBtn.addEventListener('click', () => {
+  if (!confirm(t('resetAllConfirm'))) return;
+  localStorage.removeItem(OVERRIDES_KEY);
+  Object.keys(COUNTRIES).forEach(code => {
+    Object.assign(COUNTRIES[code], ORIGINAL_COUNTRIES[code]);
+  });
+  renderSettingsList(settingsSearch.value);
+});
+
+// サービスワーカーを登録し、オフラインでも使えるようにする
+// (file://で直接開いた場合は登録できないブラウザもあるが、その場合は無視してOK)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js").catch(() => {
+      // file://で開いている場合など、登録できない環境では静かに諦める
+    });
+  });
+}
+
+// ------------------------------------------------------------------
+// 言語切り替え(日本語 / English)
+// ------------------------------------------------------------------
+const langToggleBtn = document.getElementById('langToggleBtn');
+
+function applyLanguage() {
+  // data-i18n属性を持つ要素のテキストをまとめて差し替える
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+
+  // 切り替えボタンには「切り替え先」の言語を表示する
+  langToggleBtn.textContent = currentLang === 'ja' ? 'EN' : 'JA';
+  document.documentElement.lang = currentLang;
+
+  // すでに結果が表示されていれば、選んだ言語で表示し直す
+  if (lastResultInfo) {
+    showStamp(lastResultInfo);
+  } else {
+    showPlaceholder();
+  }
+
+  // 設定画面が開いていれば、その場でラベルも更新する
+  if (settingsOverlay.classList.contains('open')) {
+    renderSettingsList(settingsSearch.value);
+  }
+}
+
+langToggleBtn.addEventListener('click', () => {
+  currentLang = currentLang === 'ja' ? 'en' : 'ja';
+  localStorage.setItem('uiLang', currentLang);
+  applyLanguage();
+});
+
+applyLanguage(); // 起動時に保存済みの言語設定を反映
+
+// ------------------------------------------------------------------
+// オンボーディング画面: 初回起動時だけ使い方を案内する
+// ------------------------------------------------------------------
+const onboardingOverlay = document.getElementById('onboardingOverlay');
+const onboardingStartBtn = document.getElementById('onboardingStartBtn');
+const helpLinkBtn = document.getElementById('helpLinkBtn');
+const ONBOARDING_KEY = 'onboardingSeen';
+
+function openOnboarding() {
+  onboardingOverlay.classList.add('open');
+}
+function closeOnboarding() {
+  onboardingOverlay.classList.remove('open');
+  localStorage.setItem(ONBOARDING_KEY, 'true');
+}
+
+if (!localStorage.getItem(ONBOARDING_KEY)) {
+  openOnboarding();
+}
+
+onboardingStartBtn.addEventListener('click', closeOnboarding);
+// フッターの「使い方を見る」からは、いつでも再度呼び出せるようにする
+helpLinkBtn.addEventListener('click', openOnboarding);
+onboardingOverlay.addEventListener('click', (e) => {
+  if (e.target === onboardingOverlay) closeOnboarding();
+});
+
+// ------------------------------------------------------------------
+// バナー広告(AdMob): ネイティブアプリ(Capacitor)上でのみ動作する。
+// ブラウザでこのファイルを直接開いた場合(PWAとして使う場合)は、
+// vendor/配下のスクリプトが読み込まれないため、何もしない。
+// ------------------------------------------------------------------
+(function setupBannerAd() {
+  // capacitorExports / capacitorStripe は vendor/*.js が読み込めたときだけ存在するグローバル変数
+  if (typeof capacitorExports === 'undefined' || typeof capacitorStripe === 'undefined') return;
+  const Capacitor = capacitorExports.Capacitor;
+  if (!Capacitor || !Capacitor.isNativePlatform || !Capacitor.isNativePlatform()) return;
+
+  const AdMob = capacitorStripe.AdMob;
+
+  // 本番用の広告ユニットID(AdMobで取得したもの)
+  // Android版は現在このプロジェクトに未追加だが、将来 `npx cap add android` する際にそのまま使える
+  const BANNER_AD_ID = {
+    ios: 'ca-app-pub-8174756915786797/8982380160',
+    android: 'ca-app-pub-8174756915786797/4075989687',
+  };
+  const platform = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
+  const adId = BANNER_AD_ID[platform];
+  if (!adId) return; // 未対応プラットフォームでは広告を出さない
+
+  document.body.classList.add('has-ad-banner');
+
+  AdMob.initialize({ initializeForTesting: false })
+    .then(() => AdMob.showBanner({
+      adId: adId,
+      adSize: 'ADAPTIVE_BANNER',
+      position: 'BOTTOM_CENTER',
+      margin: 0,
+      isTesting: false,
+    }))
+    .catch(err => console.error('AdMobバナーの表示に失敗しました', err));
+
+  // バナーの実際の高さに合わせて、コンテンツ下部の余白を調整する
+  AdMob.addListener('bannerAdSizeChanged', (info) => {
+    if (info && info.height) {
+      document.documentElement.style.setProperty('--ad-banner-height', `${info.height}px`);
+    }
+  });
+})();

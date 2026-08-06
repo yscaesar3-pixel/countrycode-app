@@ -1,0 +1,15 @@
+{
+  "name": "国コード早見帳",
+  "short_name": "国コード早見帳",
+  "description": "国のアルファベット3文字コード(ISO 3166-1)や国名から、国名と現地語の「ありがとう」を調べられる辞典アプリ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#131f38",
+  "theme_color": "#1b2a4a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
