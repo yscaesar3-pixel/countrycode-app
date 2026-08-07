@@ -28,9 +28,6 @@ workflows:
       - name: Sync Capacitor iOS project
         script: |
           npx cap sync ios
-      - name: Set up keychain
-        script: |
-          keychain initialize
       - name: Set up code signing (App Store Connect API連携)
         script: |
           xcode-project use-profiles
