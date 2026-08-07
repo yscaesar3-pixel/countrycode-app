@@ -4,3 +4,6 @@ ios/App/build/
 ios/DerivedData/
 .DS_Store
 *.log
+
+*.p12
+*.mobileprovision
