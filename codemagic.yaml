@@ -24,7 +24,7 @@ workflows:
     scripts:
       - name: Install npm dependencies
         script: |
-          npm install
+          npm install --omit=dev
       - name: Sync Capacitor iOS project
         script: |
           npx cap sync ios
