@@ -7,12 +7,11 @@ workflows:
       app_store_connect: oddiro_asc_key   # Codemagicに既存の連携(ODDIROで使用したもの)をそのまま利用
     environment:
       vars:
-        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.yutaXXX.countrycode"
       node: 22
       xcode: latest
-      cocoapods: default
     triggering:
       events:
         - push
@@ -26,9 +25,6 @@ workflows:
       - name: Sync Capacitor iOS project
         script: |
           npx cap sync ios
-      - name: Install CocoaPods
-        script: |
-          cd ios/App && pod install
       - name: Set up code signing (App Store Connect API連携)
         script: |
           xcode-project use-profiles
@@ -39,7 +35,7 @@ workflows:
       - name: Build .ipa
         script: |
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
+            --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
