@@ -34,7 +34,9 @@ workflows:
       - name: Increment build number
         script: |
           cd $CM_BUILD_DIR/ios/App
-          agvtool new-version -all $(($(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID") + 1))
+          echo "Setting build number to $PROJECT_BUILD_NUMBER"
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = $PROJECT_BUILD_NUMBER/g" App.xcodeproj/project.pbxproj
+          grep CURRENT_PROJECT_VERSION App.xcodeproj/project.pbxproj
       - name: Build .ipa
         script: |
           xcode-project build-ipa \
