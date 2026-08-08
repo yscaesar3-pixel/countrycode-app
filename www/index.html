@@ -1216,11 +1216,31 @@ function lookup(rawCode) {
   }
 }
 
-input.addEventListener('input', (e) => {
-  // 常に大文字に変換し、アルファベット以外は除去する
-  const cleaned = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
-  e.target.value = cleaned;
+// 日本語キーボードなどのIME(かな漢字変換)は、文字が確定するまで
+// 「変換中」の状態を経由する。この間に value を書き換えてしまうと、
+// IME側の内部状態とズレて文字が重複入力される不具合が起きるため、
+// 変換中かどうかを isComposing で判定し、変換中は書き換えを行わないようにする。
+let isComposingCode = false;
+
+function processCodeInput(target) {
+  const cleaned = target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+  target.value = cleaned;
   lookup(cleaned);
+}
+
+input.addEventListener('compositionstart', () => {
+  isComposingCode = true;
+});
+
+input.addEventListener('compositionend', (e) => {
+  isComposingCode = false;
+  processCodeInput(e.target);
+});
+
+input.addEventListener('input', (e) => {
+  // IME変換中(isComposing)は何もしない。確定時はcompositionendで処理される
+  if (isComposingCode || e.isComposing) return;
+  processCodeInput(e.target);
 });
 
 // ------------------------------------------------------------------
@@ -1293,7 +1313,19 @@ function searchByName(query) {
   });
 }
 
+let isComposingName = false;
+
+nameInput.addEventListener('compositionstart', () => {
+  isComposingName = true;
+});
+
+nameInput.addEventListener('compositionend', (e) => {
+  isComposingName = false;
+  searchByName(e.target.value);
+});
+
 nameInput.addEventListener('input', (e) => {
+  if (isComposingName || e.isComposing) return;
   searchByName(e.target.value);
 });
 
@@ -1545,7 +1577,7 @@ onboardingOverlay.addEventListener('click', (e) => {
   // ---- 動作確認用フラグ ----
   // true にすると、実際の広告ユニットの代わりにGoogleのテスト広告を表示する。
   // バナーが表示されるかどうかを切り分けるためのもの。確認が終わったら false に戻すこと。
-  const DEBUG_FORCE_TEST_ADS = true;
+  const DEBUG_FORCE_TEST_ADS = false;
 
   // 本番用の広告ユニットID(AdMobで取得したもの)
   // Android版は現在このプロジェクトに未追加だが、将来 `npx cap add android` する際にそのまま使える
