@@ -1542,27 +1542,41 @@ onboardingOverlay.addEventListener('click', (e) => {
 
   const AdMob = capacitorStripe.AdMob;
 
+  // ---- 動作確認用フラグ ----
+  // true にすると、実際の広告ユニットの代わりにGoogleのテスト広告を表示する。
+  // バナーが表示されるかどうかを切り分けるためのもの。確認が終わったら false に戻すこと。
+  const DEBUG_FORCE_TEST_ADS = true;
+
   // 本番用の広告ユニットID(AdMobで取得したもの)
   // Android版は現在このプロジェクトに未追加だが、将来 `npx cap add android` する際にそのまま使える
   const BANNER_AD_ID = {
     ios: 'ca-app-pub-8174756915786797/8982380160',
     android: 'ca-app-pub-8174756915786797/4075989687',
   };
+  const TEST_BANNER_AD_ID = {
+    ios: 'ca-app-pub-3940256099942544/2934735716', // Googleの共通テスト用バナーID
+    android: 'ca-app-pub-3940256099942544/6300978111',
+  };
   const platform = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
-  const adId = BANNER_AD_ID[platform];
+  const adId = DEBUG_FORCE_TEST_ADS ? TEST_BANNER_AD_ID[platform] : BANNER_AD_ID[platform];
   if (!adId) return; // 未対応プラットフォームでは広告を出さない
 
   document.body.classList.add('has-ad-banner');
+  console.log('[AdMob] platform:', platform, 'adId:', adId, 'testMode:', DEBUG_FORCE_TEST_ADS);
 
-  AdMob.initialize({ initializeForTesting: false })
-    .then(() => AdMob.showBanner({
-      adId: adId,
-      adSize: 'ADAPTIVE_BANNER',
-      position: 'BOTTOM_CENTER',
-      margin: 0,
-      isTesting: false,
-    }))
-    .catch(err => console.error('AdMobバナーの表示に失敗しました', err));
+  AdMob.initialize({ initializeForTesting: DEBUG_FORCE_TEST_ADS })
+    .then(() => {
+      console.log('[AdMob] initialize succeeded. Showing banner...');
+      return AdMob.showBanner({
+        adId: adId,
+        adSize: 'ADAPTIVE_BANNER',
+        position: 'BOTTOM_CENTER',
+        margin: 0,
+        isTesting: DEBUG_FORCE_TEST_ADS,
+      });
+    })
+    .then(() => console.log('[AdMob] showBanner succeeded.'))
+    .catch(err => console.error('[AdMob] バナーの表示に失敗しました', err));
 
   // バナーの実際の高さに合わせて、コンテンツ下部の余白を調整する
   AdMob.addListener('bannerAdSizeChanged', (info) => {
